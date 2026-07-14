@@ -5,8 +5,8 @@ const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:8080";
 const E2E_DB = path.join(__dirname, "../data/bookshop-e2e.sqlite");
 const startCommand =
   process.platform === "win32"
-    ? `if exist "${E2E_DB}" del /f /q "${E2E_DB}" & php -S 127.0.0.1:8080 -t ../public ../router.php`
-    : `rm -f "${E2E_DB}" && php -S 127.0.0.1:8080 -t ../public ../router.php`;
+    ? `if not exist "..\\data" mkdir "..\\data" & if exist "${E2E_DB}" del /f /q "${E2E_DB}" & php -S 127.0.0.1:8080 -t ../public ../router.php`
+    : `mkdir -p ../data && rm -f "${E2E_DB}" && php -S 127.0.0.1:8080 -t ../public ../router.php`;
 
 export default defineConfig({
   testDir: ".",

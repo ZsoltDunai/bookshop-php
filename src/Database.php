@@ -16,6 +16,12 @@ class Database
                 }
 
                 $dsn = 'sqlite:' . DATA_PATH . '/bookshop.sqlite';
+            } elseif (str_starts_with($dsn, 'sqlite:') && $dsn !== 'sqlite::memory:') {
+                $dbFile = substr($dsn, 7);
+                $dbDir = dirname($dbFile);
+                if ($dbDir !== '' && $dbDir !== '.' && !is_dir($dbDir)) {
+                    mkdir($dbDir, 0777, true);
+                }
             }
 
             self::$instance = new PDO($dsn);
