@@ -92,6 +92,48 @@ The database will be recreated and re-seeded on next request.
 
 GitHub Actions runs on every push and pull request to `main`/`master`:
 
-- PHP syntax lint on all source files
-- Starts the built-in server
-- Smoke tests for browse, search, login, cart, checkout, and orders
+| Job | What it runs |
+|-----|----------------|
+| **PHPUnit** | Unit + integration tests (auth, cart, checkout, security, performance) |
+| **Smoke** | Bash curl script for happy-path HTTP checks |
+| **Playwright E2E** | Browser UI tests + HTTP contract/security specs |
+
+### Run tests locally
+
+**PHPUnit** (requires PHP 8.1+, curl, Composer):
+
+```bash
+composer install
+vendor/bin/phpunit
+vendor/bin/phpunit --testsuite unit
+vendor/bin/phpunit --testsuite integration
+```
+
+**Smoke tests** (server must be running on port 8080):
+
+```bash
+php -S 127.0.0.1:8080 -t public router.php
+bash scripts/ci-smoke.sh
+```
+
+**Playwright E2E**:
+
+```bash
+cd e2e
+npm install
+npx playwright install chromium
+npm test
+```
+
+## Test Structure
+
+```
+tests/
+├── Unit/              # Fast service-layer tests (in-memory SQLite)
+├── Integration/       # HTTP tests against built-in server
+└── Support/           # Test server, HTTP client
+
+e2e/
+├── ui/                # Browser tests (login, shop, cart, checkout)
+└── http/              # Contract + security HTTP specs
+```

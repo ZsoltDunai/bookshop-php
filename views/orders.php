@@ -1,19 +1,19 @@
 <?php $pageTitle = 'Orders'; ?>
 
 <section class="page-header">
-    <h1>Order history</h1>
+    <h1 data-testid="orders-heading">Order history</h1>
 </section>
 
 <?php if (empty($orderDetails)): ?>
-    <div class="empty-state">
+    <div class="empty-state" data-testid="orders-empty">
         <p>You haven't placed any orders yet.</p>
         <a href="/" class="btn btn-primary">Start shopping</a>
     </div>
 <?php else: ?>
-    <div class="orders-list">
+    <div class="orders-list" data-testid="orders-list">
         <?php foreach ($orderDetails as $detail): ?>
             <?php $order = $detail['order']; ?>
-            <article class="order-card">
+            <article class="order-card" data-testid="order-card" data-order-id="<?= (int) $order['id'] ?>">
                 <header class="order-header">
                     <div>
                         <h2>Order #<?= (int) $order['id'] ?></h2>

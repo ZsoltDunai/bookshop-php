@@ -34,6 +34,23 @@ cart_redirect="$(curl -sS -o /dev/null -w "%{http_code} %{redirect_url}" "$BASE_
 echo "$cart_redirect" | grep -q "302"
 echo "$cart_redirect" | grep -q "/login"
 
+echo "==> Invalid login"
+invalid_login="$(curl -fsS -X POST "$BASE_URL/login" -d "email=demo@bookshop.io" -d "password=wrong")"
+echo "$invalid_login" | grep -q "Invalid email or password"
+
+echo "==> Register new user"
+REGISTER_EMAIL="ci-user-$(date +%s)@bookshop.io"
+curl -fsS -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
+  -X POST "$BASE_URL/register" \
+  -d "email=$REGISTER_EMAIL" \
+  -d "password=password123" \
+  -o /dev/null
+
+echo "==> XSS search is escaped"
+xss_search="$(curl -fsS "$BASE_URL/?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E")"
+echo "$xss_search" | grep -q '&lt;script&gt;'
+echo "$xss_search" | grep -qv '<script>alert(1)</script>'
+
 echo "==> Demo login"
 curl -fsS -c "$COOKIE_JAR" -b "$COOKIE_JAR" \
   -X POST "$BASE_URL/login" \

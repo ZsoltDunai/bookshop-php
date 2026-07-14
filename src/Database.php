@@ -9,17 +9,26 @@ class Database
     public static function getInstance(): PDO
     {
         if (self::$instance === null) {
-            if (!is_dir(DATA_PATH)) {
-                mkdir(DATA_PATH, 0777, true);
+            $dsn = getenv('BOOKSHOP_DB');
+            if ($dsn === false || $dsn === '') {
+                if (!is_dir(DATA_PATH)) {
+                    mkdir(DATA_PATH, 0777, true);
+                }
+
+                $dsn = 'sqlite:' . DATA_PATH . '/bookshop.sqlite';
             }
 
-            $dbPath = DATA_PATH . '/bookshop.sqlite';
-            self::$instance = new PDO('sqlite:' . $dbPath);
+            self::$instance = new PDO($dsn);
             self::$instance->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             self::$instance->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         }
 
         return self::$instance;
+    }
+
+    public static function reset(): void
+    {
+        self::$instance = null;
     }
 
     public static function initialize(): void

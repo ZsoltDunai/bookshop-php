@@ -6,13 +6,13 @@
     <span><?= e($book['title']) ?></span>
 </nav>
 
-<article class="book-detail">
+<article class="book-detail" data-testid="book-detail">
     <div class="book-detail-cover">
         <span class="book-cover-letter large"><?= e(strtoupper($book['title'][0])) ?></span>
     </div>
 
     <div class="book-detail-info">
-        <h1><?= e($book['title']) ?></h1>
+        <h1 data-testid="book-title"><?= e($book['title']) ?></h1>
         <p class="book-detail-author">by <?= e($book['author']) ?></p>
         <p class="book-detail-price"><?= formatPrice((float) $book['price']) ?></p>
 
@@ -30,9 +30,9 @@
                 <input type="hidden" name="redirect" value="/book?id=<?= (int) $book['id'] ?>">
                 <label class="qty-label">
                     Quantity
-                    <input type="number" name="quantity" value="1" min="1" max="<?= (int) $book['stock'] ?>" class="qty-input">
+                    <input type="number" name="quantity" value="1" min="1" max="<?= (int) $book['stock'] ?>" class="qty-input" data-testid="book-qty">
                 </label>
-                <button type="submit" class="btn btn-primary">Add to cart</button>
+                <button type="submit" class="btn btn-primary" data-testid="book-add-to-cart">Add to cart</button>
             </form>
         <?php elseif (!$currentUser): ?>
             <a href="/login" class="btn btn-primary">Login to purchase</a>

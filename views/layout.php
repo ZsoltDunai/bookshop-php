@@ -18,22 +18,22 @@
             </a>
 
             <nav class="nav">
-                <a href="/" class="nav-link">Browse</a>
+                <a href="/" class="nav-link" data-testid="nav-browse">Browse</a>
                 <?php if ($currentUser): ?>
-                    <a href="/cart" class="nav-link">
+                    <a href="/cart" class="nav-link" data-testid="nav-cart">
                         Cart
                         <?php if ($cartCount > 0): ?>
-                            <span class="badge"><?= (int) $cartCount ?></span>
+                            <span class="badge" data-testid="nav-cart-count"><?= (int) $cartCount ?></span>
                         <?php endif; ?>
                     </a>
-                    <a href="/orders" class="nav-link">Orders</a>
-                    <span class="nav-user"><?= e($currentUser['email']) ?></span>
+                    <a href="/orders" class="nav-link" data-testid="nav-orders">Orders</a>
+                    <span class="nav-user" data-testid="nav-user"><?= e($currentUser['email']) ?></span>
                     <form action="/logout" method="post" class="inline-form">
-                        <button type="submit" class="btn btn-ghost btn-sm">Logout</button>
+                        <button type="submit" class="btn btn-ghost btn-sm" data-testid="nav-logout">Logout</button>
                     </form>
                 <?php else: ?>
-                    <a href="/login" class="nav-link">Login</a>
-                    <a href="/register" class="btn btn-primary btn-sm">Sign up</a>
+                    <a href="/login" class="nav-link" data-testid="nav-login">Login</a>
+                    <a href="/register" class="btn btn-primary btn-sm" data-testid="nav-register">Sign up</a>
                 <?php endif; ?>
             </nav>
         </div>
@@ -43,7 +43,7 @@
         <div class="container">
             <?php $flash = getFlash(); ?>
             <?php if ($flash): ?>
-                <div class="alert alert-<?= e($flash['type']) ?>">
+                <div class="alert alert-<?= e($flash['type']) ?>" data-testid="flash-alert">
                     <?= e($flash['message']) ?>
                 </div>
             <?php endif; ?>
