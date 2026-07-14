@@ -119,7 +119,7 @@ bash scripts/ci-smoke.sh
 **Playwright E2E**:
 
 ```bash
-cd e2e
+cd tests/e2e
 npm install
 npx playwright install chromium
 npm test
@@ -131,9 +131,8 @@ npm test
 tests/
 ├── Unit/              # Fast service-layer tests (in-memory SQLite)
 ├── Integration/       # HTTP tests against built-in server
-└── Support/           # Test server, HTTP client
-
-e2e/
-├── ui/                # Browser tests (login, shop, cart, checkout)
-└── http/              # Contract + security HTTP specs
+├── Support/           # Test server, HTTP client
+└── e2e/
+    ├── ui/            # Browser tests (login, shop, cart, checkout)
+    └── http/          # Contract + security HTTP specs
 ```

@@ -107,18 +107,18 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: e2e/package.json
+          cache-dependency-path: tests/e2e/package.json
 
       - name: Install Playwright dependencies
-        working-directory: e2e
+        working-directory: tests/e2e
         run: npm install
 
       - name: Install Playwright browsers
-        working-directory: e2e
+        working-directory: tests/e2e
         run: npx playwright install chromium --with-deps
 
       - name: Run Playwright tests
-        working-directory: e2e
+        working-directory: tests/e2e
         run: npm test
 
       - name: Upload Playwright report
@@ -127,6 +127,6 @@ jobs:
         with:
           name: playwright-report
           path: |
-            e2e/playwright-report/
-            e2e/test-results/
+            tests/e2e/playwright-report/
+            tests/e2e/test-results/
           retention-days: 14
