@@ -1,15 +1,16 @@
 # Bookshop PHP
 
-A simple demo bookshop web application built with plain PHP and SQLite.
+A demo bookshop with a PHP JSON API backend and an Angular frontend, backed by SQLite.
 
 [![CI](https://github.com/ZsoltDunai/bookshop-php/actions/workflows/ci.yml/badge.svg)](https://github.com/ZsoltDunai/bookshop-php/actions/workflows/ci.yml)
 
 ## Features
 
 - Browse a catalog of books with search
-- User registration and login (session-based)
+- User registration and login (JWT bearer tokens)
 - Shopping cart with quantity management
 - Checkout and order history
+- Angular SPA served from the same PHP host
 - Self-contained SQLite database (auto-seeded on first run)
 - Docker support
 
@@ -23,16 +24,30 @@ docker compose up --build
 
 Open http://localhost:8080
 
-### PHP built-in server
+### Local development
 
-Requires PHP 8.1+ with PDO SQLite extension.
+Requires PHP 8.1+ with PDO SQLite, Node.js 20+, and Composer.
 
 ```bash
 cd bookshop-php
+composer install
+cd frontend && npm install && npm run build && cd ..
 php -S localhost:8080 -t public router.php
 ```
 
 Open http://localhost:8080
+
+For frontend hot reload during development:
+
+```bash
+# Terminal 1 — API
+php -S localhost:8080 -t public router.php
+
+# Terminal 2 — Angular dev server (proxies /api to PHP)
+cd frontend && npm start
+```
+
+Open http://localhost:4200
 
 ## Demo Account
 
@@ -43,47 +58,59 @@ Open http://localhost:8080
 
 ```
 bookshop-php/
+├── frontend/           # Angular SPA (build output -> public/)
 ├── public/
-│   ├── index.php       # Front controller / router
-│   └── css/style.css   # Styles
+│   ├── index.php     # API router + SPA fallback
+│   └── index.html    # Built Angular app
 ├── src/
-│   ├── bootstrap.php   # App bootstrap, helpers
-│   ├── Database.php    # SQLite setup & seeding
-│   ├── Auth.php        # Login, register, sessions
+│   ├── ApiRouter.php # JSON API routes
+│   ├── JwtAuth.php   # JWT token handling
+│   ├── Auth.php
 │   ├── BookService.php
 │   ├── CartService.php
 │   └── OrderService.php
-├── views/              # PHP templates
-├── data/               # SQLite database (created at runtime)
-├── router.php          # Dev server router
-├── Dockerfile
-└── docker-compose.yml
+├── tests/
+│   ├── Unit/
+│   ├── Integration/
+│   └── e2e/
+├── data/             # SQLite database (created at runtime)
+└── router.php        # Dev server router
 ```
 
-## Pages
+## API Endpoints
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/health` | Health check |
+| GET | `/api/books` | List books (`?q=` to search) |
+| GET | `/api/books/{id}` | Book detail |
+| POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/login` | Login, returns JWT |
+| GET | `/api/auth/me` | Current user (auth required) |
+| GET | `/api/cart` | Cart contents |
+| POST | `/api/cart/items` | Add to cart |
+| PATCH | `/api/cart/items/{id}` | Update quantity |
+| DELETE | `/api/cart/items/{id}` | Remove item |
+| POST | `/api/orders/checkout` | Place order |
+| GET | `/api/orders` | Order history |
+
+## Frontend Routes
 
 | Route | Description |
 |-------|-------------|
 | `/` | Browse books, search |
-| `/book?id=1` | Book detail |
+| `/book/:id` | Book detail |
 | `/login` | Sign in |
 | `/register` | Create account |
 | `/cart` | Shopping cart |
 | `/orders` | Order history |
-| `/health` | Health check (JSON) |
 
 ## Reset Database
 
 Delete the SQLite file and restart:
 
 ```bash
-# Local
 rm data/bookshop.sqlite
-
-# Docker
-docker compose down
-rm data/bookshop.sqlite
-docker compose up --build
 ```
 
 The database will be recreated and re-seeded on next request.
@@ -94,45 +121,17 @@ GitHub Actions runs on every push and pull request to `main`/`master`:
 
 | Job | What it runs |
 |-----|----------------|
-| **PHPUnit** | Unit + integration tests (auth, cart, checkout, security, performance) |
-| **Smoke** | Bash curl script for happy-path HTTP checks |
+| **Build Angular frontend** | `npm run build` into `public/` |
+| **PHPUnit** | Unit + integration API tests |
+| **Smoke** | Bash curl script for API happy path |
 | **Playwright E2E** | Browser UI tests + HTTP contract/security specs |
 
 ### Run tests locally
 
-**PHPUnit** (requires PHP 8.1+, curl, Composer):
-
 ```bash
 composer install
+cd frontend && npm install && npm run build && cd ..
 vendor/bin/phpunit
-vendor/bin/phpunit --testsuite unit
-vendor/bin/phpunit --testsuite integration
-```
-
-**Smoke tests** (server must be running on port 8080):
-
-```bash
-php -S 127.0.0.1:8080 -t public router.php
-bash scripts/ci-smoke.sh
-```
-
-**Playwright E2E**:
-
-```bash
-cd tests/e2e
-npm install
-npx playwright install chromium
-npm test
-```
-
-## Test Structure
-
-```
-tests/
-├── Unit/              # Fast service-layer tests (in-memory SQLite)
-├── Integration/       # HTTP tests against built-in server
-├── Support/           # Test server, HTTP client
-└── e2e/
-    ├── ui/            # Browser tests (login, shop, cart, checkout)
-    └── http/          # Contract + security HTTP specs
+bash scripts/ci-smoke.sh   # with server running
+cd tests/e2e && npm install && npx playwright install chromium && npm test
 ```

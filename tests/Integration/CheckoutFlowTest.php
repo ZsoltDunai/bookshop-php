@@ -8,56 +8,53 @@ class CheckoutFlowTest extends IntegrationTestCase
     {
         $this->login();
 
-        $add = $this->client()->post('/cart/add', [
+        $add = $this->client()->postJson('/api/cart/items', [
             'book_id' => 1,
             'quantity' => 1,
-            'redirect' => '/cart',
-        ], false);
-        $this->assertSame(302, $add->status);
+        ]);
+        $this->assertSame(201, $add->status);
 
-        $cart = $this->client()->get('/cart');
-        $this->assertStringContainsString('The Great Gatsby', $cart->body);
-        $this->assertStringContainsString('Checkout', $cart->body);
+        $cart = $this->client()->getJson('/api/cart');
+        $cartPayload = json_decode($cart->body, true);
+        $this->assertCount(1, $cartPayload['items']);
+        $this->assertSame('The Great Gatsby', $cartPayload['items'][0]['book']['title']);
 
-        $checkout = $this->client()->post('/checkout', [], false);
-        $this->assertSame(302, $checkout->status);
+        $checkout = $this->client()->postJson('/api/orders/checkout');
+        $this->assertSame(201, $checkout->status);
 
-        $orders = $this->client()->get('/orders');
-        $this->assertStringContainsString('Order #', $orders->body);
-        $this->assertStringContainsString('The Great Gatsby', $orders->body);
+        $orders = $this->client()->getJson('/api/orders');
+        $ordersPayload = json_decode($orders->body, true);
+        $this->assertCount(1, $ordersPayload);
+        $this->assertSame('The Great Gatsby', $ordersPayload[0]['items'][0]['book']['title']);
     }
 
     public function testUpdateCartQuantity(): void
     {
         $this->login();
-        $this->client()->post('/cart/add', [
+        $add = $this->client()->postJson('/api/cart/items', [
             'book_id' => 1,
             'quantity' => 1,
-            'redirect' => '/cart',
         ]);
+        $this->assertSame(201, $add->status);
+        $item = json_decode($add->body, true);
 
-        $cart = $this->client()->get('/cart');
-        preg_match('/data-item-id="(\d+)"/', $cart->body, $matches);
-        $this->assertNotEmpty($matches);
-
-        $update = $this->client()->post('/cart/update', [
-            'item_id' => $matches[1],
+        $update = $this->client()->patchJson('/api/cart/items/' . $item['id'], [
             'quantity' => 2,
-        ], false);
-        $this->assertSame(302, $update->status);
+        ]);
+        $this->assertSame(200, $update->status);
 
-        $updatedCart = $this->client()->get('/cart');
-        $this->assertStringContainsString('value="2"', $updatedCart->body);
+        $updatedCart = $this->client()->getJson('/api/cart');
+        $payload = json_decode($updatedCart->body, true);
+        $this->assertSame(2, $payload['items'][0]['quantity']);
     }
 
     public function testCheckoutEmptyCartShowsError(): void
     {
         $this->login();
 
-        $checkout = $this->client()->post('/checkout', [], false);
-        $this->assertSame(302, $checkout->status);
-
-        $cart = $this->client()->get('/cart');
-        $this->assertStringContainsString('Your cart is empty', $cart->body);
+        $checkout = $this->client()->postJson('/api/orders/checkout');
+        $this->assertSame(400, $checkout->status);
+        $payload = json_decode($checkout->body, true);
+        $this->assertStringContainsString('empty', strtolower($payload['detail']));
     }
 }

@@ -71,6 +71,41 @@ class OrderService
         }
     }
 
+    public function ordersForUser(int $userId): array
+    {
+        $orders = $this->forUser($userId);
+        $payload = [];
+
+        foreach ($orders as $order) {
+            $formatted = $this->findForUser((int) $order['id'], $userId);
+            if ($formatted) {
+                $payload[] = $formatted;
+            }
+        }
+
+        return $payload;
+    }
+
+    public function findForUser(int $orderId, int $userId): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM orders WHERE id = ? AND user_id = ?');
+        $stmt->execute([$orderId, $userId]);
+        $order = $stmt->fetch();
+
+        if (!$order) {
+            return null;
+        }
+
+        $items = $this->items($orderId);
+        $mappedItems = array_map(static function (array $item): array {
+            $item['unit_price'] = (float) $item['price'];
+
+            return $item;
+        }, $items);
+
+        return ApiFormatter::order($order, $mappedItems);
+    }
+
     public function forUser(int $userId): array
     {
         $stmt = $this->db->prepare('

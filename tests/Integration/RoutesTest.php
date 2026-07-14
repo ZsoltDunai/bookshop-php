@@ -4,46 +4,60 @@ declare(strict_types=1);
 
 class RoutesTest extends IntegrationTestCase
 {
-    public function testHomePageLoads(): void
+    public function testSpaHomeLoads(): void
     {
         $response = $this->client()->get('/');
 
         $this->assertSame(200, $response->status);
-        $this->assertStringContainsString('Discover your next great read', $response->body);
-        $this->assertStringContainsString('The Great Gatsby', $response->body);
+        $this->assertStringContainsString('<app-root>', $response->body);
+    }
+
+    public function testBooksApiReturnsCatalog(): void
+    {
+        $response = $this->client()->getJson('/api/books');
+        $payload = json_decode($response->body, true);
+
+        $this->assertSame(200, $response->status);
+        $titles = array_column($payload, 'title');
+        $this->assertContains('The Great Gatsby', $titles);
     }
 
     public function testSearchFiltersBooks(): void
     {
-        $response = $this->client()->get('/?q=Orwell');
+        $response = $this->client()->getJson('/api/books?q=Orwell');
+        $payload = json_decode($response->body, true);
 
         $this->assertSame(200, $response->status);
-        $this->assertStringContainsString('1984', $response->body);
-        $this->assertStringNotContainsString('The Hobbit', $response->body);
+        $this->assertCount(1, $payload);
+        $this->assertSame('1984', $payload[0]['title']);
     }
 
-    public function testBookDetailPage(): void
+    public function testBookDetailApi(): void
     {
-        $response = $this->client()->get('/book?id=1');
+        $response = $this->client()->getJson('/api/books/1');
+        $payload = json_decode($response->body, true);
 
         $this->assertSame(200, $response->status);
-        $this->assertStringContainsString('The Great Gatsby', $response->body);
-        $this->assertStringContainsString('F. Scott Fitzgerald', $response->body);
+        $this->assertSame('The Great Gatsby', $payload['title']);
+        $this->assertSame('F. Scott Fitzgerald', $payload['author']);
     }
 
     public function testMissingBookReturns404(): void
     {
-        $response = $this->client()->get('/book?id=9999');
+        $response = $this->client()->getJson('/api/books/9999');
+        $payload = json_decode($response->body, true);
 
         $this->assertSame(404, $response->status);
-        $this->assertStringContainsString('404', $response->body);
+        $this->assertSame('Book not found', $payload['detail']);
     }
 
-    public function testUnknownRouteReturns404(): void
+    public function testUnknownApiRouteReturns404(): void
     {
-        $response = $this->client()->get('/does-not-exist');
+        $response = $this->client()->getJson('/api/does-not-exist');
+        $payload = json_decode($response->body, true);
 
         $this->assertSame(404, $response->status);
+        $this->assertSame('Not found', $payload['detail']);
     }
 
     public function testHealthEndpointReturnsJson(): void

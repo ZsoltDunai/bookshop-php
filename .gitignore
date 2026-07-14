@@ -3,6 +3,17 @@
 /vendor/
 /.phpunit.cache/
 
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.angular/
+/public/browser/
+/public/3rdpartylicenses.txt
+/public/prerendered-routes.json
+/public/*.js
+/public/*.css
+/public/*.map
+!/public/css/
+
 /tests/e2e/node_modules/
 /tests/e2e/playwright-report/
 /tests/e2e/test-results/

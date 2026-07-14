@@ -4,69 +4,61 @@ declare(strict_types=1);
 
 class AuthRoutesTest extends IntegrationTestCase
 {
-    public function testCartRedirectsToLoginWhenUnauthenticated(): void
+    public function testCartRequiresAuthentication(): void
     {
-        $response = $this->client()->get('/cart', false);
+        $response = $this->client()->getJson('/api/cart');
 
-        $this->assertSame(302, $response->status);
-        $this->assertStringContainsString('/login', $response->header('Location') ?? '');
+        $this->assertSame(401, $response->status);
+        $payload = json_decode($response->body, true);
+        $this->assertSame('Could not validate credentials', $payload['detail']);
     }
 
-    public function testLoginPageLoads(): void
+    public function testInvalidLoginReturns401(): void
     {
-        $response = $this->client()->get('/login');
-
-        $this->assertSame(200, $response->status);
-        $this->assertStringContainsString('Welcome back', $response->body);
-    }
-
-    public function testInvalidLoginShowsError(): void
-    {
-        $response = $this->client()->post('/login', [
+        $response = $this->client()->postJson('/api/auth/login', [
             'email' => 'demo@bookshop.io',
             'password' => 'wrong-password',
         ]);
 
-        $this->assertSame(200, $response->status);
-        $this->assertStringContainsString('Invalid email or password', $response->body);
+        $this->assertSame(401, $response->status);
+        $payload = json_decode($response->body, true);
+        $this->assertSame('Invalid credentials', $payload['detail']);
     }
 
-    public function testValidLoginRedirectsHome(): void
+    public function testValidLoginReturnsToken(): void
     {
-        $response = $this->client()->post('/login', [
+        $response = $this->client()->postJson('/api/auth/login', [
             'email' => 'demo@bookshop.io',
             'password' => 'password123',
-        ], false);
+        ]);
 
-        $this->assertSame(302, $response->status);
-        $this->assertStringContainsString('/', $response->header('Location') ?? '');
-
-        $home = $this->client()->get('/');
-        $this->assertStringContainsString('demo@bookshop.io', $home->body);
+        $this->assertSame(200, $response->status);
+        $payload = json_decode($response->body, true);
+        $this->assertArrayHasKey('access_token', $payload);
+        $this->assertSame('bearer', $payload['token_type']);
     }
 
     public function testRegisterCreatesAccount(): void
     {
         $email = 'new-user-' . uniqid() . '@bookshop.io';
-        $response = $this->client()->post('/register', [
+        $response = $this->client()->postJson('/api/auth/register', [
             'email' => $email,
             'password' => 'password123',
-        ], false);
+        ]);
 
-        $this->assertSame(302, $response->status);
-
-        $home = $this->client()->get('/');
-        $this->assertStringContainsString($email, $home->body);
+        $this->assertSame(201, $response->status);
+        $payload = json_decode($response->body, true);
+        $this->assertSame($email, $payload['email']);
     }
 
-    public function testLogoutClearsSession(): void
+    public function testMeReturnsCurrentUser(): void
     {
         $this->login();
 
-        $logout = $this->client()->post('/logout', [], false);
-        $this->assertSame(302, $logout->status);
+        $response = $this->client()->getJson('/api/auth/me');
 
-        $cart = $this->client()->get('/cart', false);
-        $this->assertSame(302, $cart->status);
+        $this->assertSame(200, $response->status);
+        $payload = json_decode($response->body, true);
+        $this->assertSame('demo@bookshop.io', $payload['email']);
     }
 }

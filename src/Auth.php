@@ -11,28 +11,13 @@ class Auth
         $this->db = Database::getInstance();
     }
 
-    public function user(): ?array
+    public function findUserById(int $id): ?array
     {
-        if (!isset($_SESSION['user_id'])) {
-            return null;
-        }
-
         $stmt = $this->db->prepare('SELECT id, email, created_at FROM users WHERE id = ?');
-        $stmt->execute([$_SESSION['user_id']]);
+        $stmt->execute([$id]);
         $user = $stmt->fetch();
 
         return $user ?: null;
-    }
-
-    public function requireLogin(): array
-    {
-        $user = $this->user();
-        if (!$user) {
-            flash('error', 'Please log in to continue.');
-            redirect('/login');
-        }
-
-        return $user;
     }
 
     public function register(string $email, string $password): array
@@ -55,13 +40,18 @@ class Auth
 
         $stmt = $this->db->prepare('INSERT INTO users (email, password_hash) VALUES (?, ?)');
         $stmt->execute([$email, password_hash($password, PASSWORD_DEFAULT)]);
+        $userId = (int) $this->db->lastInsertId();
 
-        $_SESSION['user_id'] = (int) $this->db->lastInsertId();
-
-        return ['ok' => true];
+        return [
+            'ok' => true,
+            'user' => [
+                'id' => $userId,
+                'email' => $email,
+            ],
+        ];
     }
 
-    public function login(string $email, string $password): array
+    public function authenticate(string $email, string $password): array
     {
         $email = trim(strtolower($email));
 
@@ -70,16 +60,9 @@ class Auth
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
-            return ['ok' => false, 'error' => 'Invalid email or password.'];
+            return ['ok' => false, 'error' => 'Invalid credentials'];
         }
 
-        $_SESSION['user_id'] = (int) $user['id'];
-
-        return ['ok' => true];
-    }
-
-    public function logout(): void
-    {
-        unset($_SESSION['user_id']);
+        return ['ok' => true, 'user_id' => (int) $user['id']];
     }
 }

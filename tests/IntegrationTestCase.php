@@ -51,23 +51,25 @@ abstract class IntegrationTestCase extends TestCase
 
     protected function login(string $email = 'demo@bookshop.io', string $password = 'password123'): void
     {
-        $response = $this->client()->post('/login', [
-            'email' => $email,
-            'password' => $password,
-        ], false);
-
-        $this->assertSame(302, $response->status, $response->body);
-        $this->assertStringContainsString('/', $response->header('Location') ?? '');
-    }
-
-    protected function registerUser(string $email, string $password = 'password123'): void
-    {
-        $response = $this->client()->post('/register', [
+        $response = $this->client()->postJson('/api/auth/login', [
             'email' => $email,
             'password' => $password,
         ]);
 
-        $this->assertSame(200, $response->status);
+        $this->assertSame(200, $response->status, $response->body);
+        $payload = json_decode($response->body, true);
+        $this->assertArrayHasKey('access_token', $payload);
+        $this->client()->setToken($payload['access_token']);
+    }
+
+    protected function registerUser(string $email, string $password = 'password123'): void
+    {
+        $response = $this->client()->postJson('/api/auth/register', [
+            'email' => $email,
+            'password' => $password,
+        ]);
+
+        $this->assertSame(201, $response->status, $response->body);
     }
 
     protected function newClient(): HttpClient

@@ -4,24 +4,25 @@ declare(strict_types=1);
 
 class SecurityTest extends IntegrationTestCase
 {
-    public function testSearchEscapesHtml(): void
+    public function testSearchWithSqlInjectionReturnsEmpty(): void
     {
-        $payload = '<script>alert(1)</script>';
-        $response = $this->client()->get('/?q=' . urlencode($payload));
+        $response = $this->client()->getJson('/api/books?q=' . urlencode("' OR 1=1 --"));
+        $payload = json_decode($response->body, true);
 
         $this->assertSame(200, $response->status);
-        $this->assertStringNotContainsString('<script>alert(1)</script>', $response->body);
-        $this->assertStringContainsString(htmlspecialchars($payload, ENT_QUOTES, 'UTF-8'), $response->body);
+        $this->assertCount(0, $payload);
     }
 
-    public function testPasswordHashNotExposedInHtml(): void
+    public function testPasswordHashNotExposedInApi(): void
     {
         $this->login();
 
-        $response = $this->client()->get('/');
+        $response = $this->client()->getJson('/api/auth/me');
+        $payload = json_decode($response->body, true);
 
+        $this->assertArrayHasKey('email', $payload);
+        $this->assertArrayNotHasKey('password_hash', $payload);
         $this->assertStringNotContainsString('$2y$', $response->body);
-        $this->assertStringNotContainsString('password_hash', $response->body);
     }
 
     public function testCartIsolationBetweenUsers(): void
@@ -29,27 +30,31 @@ class SecurityTest extends IntegrationTestCase
         $userA = $this->newClient();
         $userB = $this->newClient();
 
-        $userA->post('/login', [
+        $loginA = $userA->postJson('/api/auth/login', [
             'email' => 'demo@bookshop.io',
             'password' => 'password123',
         ]);
-        $userA->post('/cart/add', [
-            'book_id' => 1,
-            'quantity' => 1,
-            'redirect' => '/cart',
-        ]);
+        $tokenA = json_decode($loginA->body, true)['access_token'];
+        $userA->setToken($tokenA);
 
-        $cartA = $userA->get('/cart');
+        $userA->postJson('/api/cart/items', ['book_id' => 1, 'quantity' => 1]);
+        $cartA = $userA->getJson('/api/cart');
         $this->assertStringContainsString('The Great Gatsby', $cartA->body);
 
         $email = 'isolated-' . uniqid() . '@bookshop.io';
-        $userB->post('/register', [
+        $registerB = $userB->postJson('/api/auth/register', [
             'email' => $email,
             'password' => 'password123',
         ]);
+        $loginB = $userB->postJson('/api/auth/login', [
+            'email' => $email,
+            'password' => 'password123',
+        ]);
+        $userB->setToken(json_decode($loginB->body, true)['access_token']);
 
-        $cartB = $userB->get('/cart');
-        $this->assertStringContainsString('Your cart is empty', $cartB->body);
+        $cartB = $userB->getJson('/api/cart');
+        $payload = json_decode($cartB->body, true);
+        $this->assertCount(0, $payload['items']);
     }
 
     public function testOrdersOnlyVisibleToOwner(): void
@@ -57,28 +62,29 @@ class SecurityTest extends IntegrationTestCase
         $owner = $this->newClient();
         $other = $this->newClient();
 
-        $owner->post('/login', [
+        $ownerLogin = $owner->postJson('/api/auth/login', [
             'email' => 'demo@bookshop.io',
             'password' => 'password123',
         ]);
-        $owner->post('/cart/add', ['book_id' => 1, 'quantity' => 1, 'redirect' => '/cart']);
-        $owner->post('/checkout');
+        $owner->setToken(json_decode($ownerLogin->body, true)['access_token']);
+        $owner->postJson('/api/cart/items', ['book_id' => 1, 'quantity' => 1]);
+        $owner->postJson('/api/orders/checkout');
 
-        $ownerOrders = $owner->get('/orders');
-        $this->assertStringContainsString('Order #', $ownerOrders->body);
+        $ownerOrders = $owner->getJson('/api/orders');
+        $this->assertGreaterThan(0, count(json_decode($ownerOrders->body, true)));
 
         $email = 'other-' . uniqid() . '@bookshop.io';
-        $other->post('/register', ['email' => $email, 'password' => 'password123']);
+        $other->postJson('/api/auth/register', ['email' => $email, 'password' => 'password123']);
+        $otherLogin = $other->postJson('/api/auth/login', ['email' => $email, 'password' => 'password123']);
+        $other->setToken(json_decode($otherLogin->body, true)['access_token']);
 
-        $otherOrders = $other->get('/orders');
-        $this->assertStringContainsString("You haven't placed any orders yet", $otherOrders->body);
+        $otherOrders = $other->getJson('/api/orders');
+        $this->assertCount(0, json_decode($otherOrders->body, true));
     }
 
-    public function testSqlInjectionInSearchDoesNotBreakApp(): void
+    public function testProtectedCartEndpointRequiresToken(): void
     {
-        $response = $this->client()->get('/?q=' . urlencode("' OR 1=1 --"));
-
-        $this->assertSame(200, $response->status);
-        $this->assertStringContainsString('No books found', $response->body);
+        $response = $this->client()->getJson('/api/cart');
+        $this->assertSame(401, $response->status);
     }
 }

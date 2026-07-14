@@ -27,57 +27,52 @@ class AuthTest extends TestCase
         $auth = new Auth();
         $auth->register('user@example.com', 'password123');
 
-        $this->resetSession();
-
         $result = $auth->register('user@example.com', 'anotherpass');
 
         $this->assertFalse($result['ok']);
         $this->assertSame('An account with this email already exists.', $result['error']);
     }
 
-    public function testRegisterCreatesSession(): void
+    public function testRegisterCreatesUser(): void
     {
         $auth = new Auth();
         $result = $auth->register('newuser@example.com', 'password123');
 
         $this->assertTrue($result['ok']);
-        $this->assertNotNull($auth->user());
-        $this->assertSame('newuser@example.com', $auth->user()['email']);
+        $this->assertSame('newuser@example.com', $result['user']['email']);
+        $this->assertGreaterThan(0, $result['user']['id']);
     }
 
-    public function testLoginWithInvalidCredentials(): void
+    public function testAuthenticateWithInvalidCredentials(): void
     {
         $this->createUser('user@example.com', 'password123');
 
         $auth = new Auth();
-        $result = $auth->login('user@example.com', 'wrong-password');
+        $result = $auth->authenticate('user@example.com', 'wrong-password');
 
         $this->assertFalse($result['ok']);
-        $this->assertSame('Invalid email or password.', $result['error']);
-        $this->assertNull($auth->user());
+        $this->assertSame('Invalid credentials', $result['error']);
     }
 
-    public function testLoginWithValidCredentials(): void
+    public function testAuthenticateWithValidCredentials(): void
     {
         $userId = $this->createUser('user@example.com', 'password123');
 
         $auth = new Auth();
-        $result = $auth->login('user@example.com', 'password123');
+        $result = $auth->authenticate('user@example.com', 'password123');
 
         $this->assertTrue($result['ok']);
-        $this->assertSame($userId, $auth->user()['id']);
+        $this->assertSame($userId, $result['user_id']);
     }
 
-    public function testLogoutClearsSession(): void
+    public function testFindUserById(): void
     {
         $userId = $this->createUser('user@example.com', 'password123');
-        $this->loginAs($userId);
 
         $auth = new Auth();
-        $this->assertNotNull($auth->user());
+        $user = $auth->findUserById($userId);
 
-        $auth->logout();
-
-        $this->assertNull($auth->user());
+        $this->assertNotNull($user);
+        $this->assertSame('user@example.com', $user['email']);
     }
 }

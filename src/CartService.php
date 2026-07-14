@@ -69,12 +69,28 @@ class CartService
         if ($existing) {
             $stmt = $this->db->prepare('UPDATE cart_items SET quantity = ? WHERE id = ?');
             $stmt->execute([$newQty, $existing['id']]);
+            $itemId = (int) $existing['id'];
         } else {
             $stmt = $this->db->prepare('INSERT INTO cart_items (user_id, book_id, quantity) VALUES (?, ?, ?)');
             $stmt->execute([$userId, $bookId, $quantity]);
+            $itemId = (int) $this->db->lastInsertId();
         }
 
-        return ['ok' => true];
+        return ['ok' => true, 'item_id' => $itemId];
+    }
+
+    public function findItem(int $userId, int $itemId): ?array
+    {
+        $stmt = $this->db->prepare('
+            SELECT ci.id, ci.book_id, ci.quantity, b.title, b.author, b.price, b.stock
+            FROM cart_items ci
+            JOIN books b ON b.id = ci.book_id
+            WHERE ci.id = ? AND ci.user_id = ?
+        ');
+        $stmt->execute([$itemId, $userId]);
+        $item = $stmt->fetch();
+
+        return $item ?: null;
     }
 
     public function update(int $userId, int $cartItemId, int $quantity): array
