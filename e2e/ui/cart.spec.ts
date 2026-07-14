@@ -6,10 +6,18 @@ test.describe("Cart UI", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("add to cart increases badge", async ({ loggedInPage, shopPage, page }) => {
+  test("add to cart increases badge", async ({ page, shopPage }) => {
+    const email = `cart-badge-${Date.now()}@bookshop.io`;
+
+    await page.goto("/register");
+    await page.getByTestId("register-email").fill(email);
+    await page.getByTestId("register-password").fill("password123");
+    await page.getByTestId("register-submit").click();
+    await expect(page).toHaveURL("/");
+
     await shopPage.goto();
     await shopPage.addFirstBookToCart();
-    await expect(page.getByTestId("nav-cart-count")).toHaveText("1", { timeout: 10_000 });
+    await expect(page.getByTestId("nav-cart-count")).toHaveText("1");
   });
 
   test("cart shows added item", async ({ cartWithItem, cartPage, page }) => {

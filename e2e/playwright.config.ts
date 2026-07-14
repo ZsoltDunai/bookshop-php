@@ -1,6 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "path";
 
 const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:8080";
+const E2E_DB = path.join(__dirname, "../data/bookshop-e2e.sqlite");
+const startCommand =
+  process.platform === "win32"
+    ? `if exist "${E2E_DB}" del /f /q "${E2E_DB}" & php -S 127.0.0.1:8080 -t ../public ../router.php`
+    : `rm -f "${E2E_DB}" && php -S 127.0.0.1:8080 -t ../public ../router.php`;
 
 export default defineConfig({
   testDir: ".",
@@ -25,13 +31,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command:
-      process.platform === "win32"
-        ? "php -S 127.0.0.1:8080 -t ../public ../router.php"
-        : "php -S 127.0.0.1:8080 -t ../public ../router.php",
+    command: startCommand,
     url: `${BASE_URL}/health`,
     cwd: __dirname,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      BOOKSHOP_DB: `sqlite:${E2E_DB}`,
+    },
   },
 });
