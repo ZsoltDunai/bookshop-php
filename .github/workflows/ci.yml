@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint and smoke tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_sqlite
+          coverage: none
+
+      - name: Lint PHP files
+        run: |
+          find src views public router.php -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Start application
+        run: |
+          php -S 127.0.0.1:8080 -t public router.php > /tmp/bookshop.log 2>&1 &
+          echo $! > /tmp/bookshop.pid
+
+      - name: Wait for health endpoint
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8080/health > /dev/null; then
+              echo "Application is healthy"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Application failed to start"
+          cat /tmp/bookshop.log || true
+          exit 1
+
+      - name: Run smoke tests
+        run: bash scripts/ci-smoke.sh
+
+      - name: Upload server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log
+          path: /tmp/bookshop.log
+          retention-days: 7
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f /tmp/bookshop.pid ]; then
+            kill "$(cat /tmp/bookshop.pid)" || true
+          fi

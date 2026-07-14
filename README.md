@@ -2,6 +2,8 @@
 
 A simple demo bookshop web application built with plain PHP and SQLite.
 
+[![CI](https://github.com/ZsoltDunai/bookshop-php/actions/workflows/ci.yml/badge.svg)](https://github.com/ZsoltDunai/bookshop-php/actions/workflows/ci.yml)
+
 ## Features
 
 - Browse a catalog of books with search
@@ -85,3 +87,11 @@ docker compose up --build
 ```
 
 The database will be recreated and re-seeded on next request.
+
+## CI
+
+GitHub Actions runs on every push and pull request to `main`/`master`:
+
+- PHP syntax lint on all source files
+- Starts the built-in server
+- Smoke tests for browse, search, login, cart, checkout, and orders
