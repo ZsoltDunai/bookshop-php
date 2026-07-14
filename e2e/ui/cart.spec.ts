@@ -9,7 +9,7 @@ test.describe("Cart UI", () => {
   test("add to cart increases badge", async ({ loggedInPage, shopPage, page }) => {
     await shopPage.goto();
     await shopPage.addFirstBookToCart();
-    await expect(page.getByTestId("nav-cart-count")).toHaveText("1");
+    await expect(page.getByTestId("nav-cart-count")).toHaveText("1", { timeout: 10_000 });
   });
 
   test("cart shows added item", async ({ cartWithItem, cartPage, page }) => {

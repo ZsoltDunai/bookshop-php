@@ -54,9 +54,10 @@ abstract class IntegrationTestCase extends TestCase
         $response = $this->client()->post('/login', [
             'email' => $email,
             'password' => $password,
-        ]);
+        ], false);
 
-        $this->assertSame(200, $response->status);
+        $this->assertSame(302, $response->status, $response->body);
+        $this->assertStringContainsString('/', $response->header('Location') ?? '');
     }
 
     protected function registerUser(string $email, string $password = 'password123'): void

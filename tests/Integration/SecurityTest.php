@@ -76,7 +76,7 @@ class SecurityTest extends IntegrationTestCase
 
     public function testSqlInjectionInSearchDoesNotBreakApp(): void
     {
-        $response = $this->client()->get("/?q=' OR 1=1 --");
+        $response = $this->client()->get('/?q=' . urlencode("' OR 1=1 --"));
 
         $this->assertSame(200, $response->status);
         $this->assertStringContainsString('No books found', $response->body);

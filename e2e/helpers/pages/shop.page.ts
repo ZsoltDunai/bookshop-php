@@ -18,7 +18,10 @@ export class ShopPage {
   }
 
   async addFirstBookToCart() {
-    await this.page.getByTestId("add-to-cart").first().click();
+    await Promise.all([
+      this.page.waitForURL("/"),
+      this.page.getByTestId("add-to-cart").first().click(),
+    ]);
   }
 
   async openFirstBook() {
