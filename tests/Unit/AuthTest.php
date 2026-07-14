@@ -47,10 +47,10 @@ class AuthTest extends TestCase
 
     public function testLoginWithInvalidCredentials(): void
     {
-        $this->createUser('demo@bookshop.io', 'password123');
+        $this->createUser('user@example.com', 'password123');
 
         $auth = new Auth();
-        $result = $auth->login('demo@bookshop.io', 'wrong-password');
+        $result = $auth->login('user@example.com', 'wrong-password');
 
         $this->assertFalse($result['ok']);
         $this->assertSame('Invalid email or password.', $result['error']);
@@ -59,10 +59,10 @@ class AuthTest extends TestCase
 
     public function testLoginWithValidCredentials(): void
     {
-        $userId = $this->createUser('demo@bookshop.io', 'password123');
+        $userId = $this->createUser('user@example.com', 'password123');
 
         $auth = new Auth();
-        $result = $auth->login('demo@bookshop.io', 'password123');
+        $result = $auth->login('user@example.com', 'password123');
 
         $this->assertTrue($result['ok']);
         $this->assertSame($userId, $auth->user()['id']);
@@ -70,7 +70,7 @@ class AuthTest extends TestCase
 
     public function testLogoutClearsSession(): void
     {
-        $userId = $this->createUser('demo@bookshop.io', 'password123');
+        $userId = $this->createUser('user@example.com', 'password123');
         $this->loginAs($userId);
 
         $auth = new Auth();

@@ -23,9 +23,10 @@ test.describe("HTTP security", () => {
     expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
   });
 
-  test("users have isolated carts", async ({ request }) => {
-    const userA = await request.newContext();
-    const userB = await request.newContext();
+  test("users have isolated carts", async ({ playwright }) => {
+    const baseURL = process.env.BASE_URL || "http://127.0.0.1:8080";
+    const userA = await playwright.request.newContext({ baseURL });
+    const userB = await playwright.request.newContext({ baseURL });
 
     await userA.post("/login", {
       form: { email: DEMO_USER.email, password: DEMO_USER.password },

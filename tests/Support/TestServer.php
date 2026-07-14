@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 final class TestServer
 {
-    private static ?resource $process = null;
+    private static mixed $process = null;
     private static ?int $port = null;
     private static ?string $dbPath = null;
     private static ?string $logPath = null;
@@ -50,9 +50,11 @@ final class TestServer
 
     public static function stop(): void
     {
-        if (is_resource(self::$process)) {
-            proc_terminate(self::$process);
-            proc_close(self::$process);
+        if (self::$process !== null) {
+            if (is_resource(self::$process)) {
+                proc_terminate(self::$process);
+                proc_close(self::$process);
+            }
             self::$process = null;
         }
 
