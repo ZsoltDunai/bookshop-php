@@ -63,19 +63,33 @@ bookshop-php/
 │   ├── index.php     # API router + SPA fallback
 │   └── index.html    # Built Angular app
 ├── src/
-│   ├── ApiRouter.php # JSON API routes
-│   ├── JwtAuth.php   # JWT token handling
-│   ├── Auth.php
-│   ├── BookService.php
-│   ├── CartService.php
-│   └── OrderService.php
+│   ├── Validation/     # Request validators (auth, cart)
+│   ├── Api/Controllers/
+│   ├── Http/
+│   ├── App.php         # Composition root
+│   └── ...
 ├── tests/
-│   ├── Unit/
-│   ├── Integration/
-│   └── e2e/
-├── data/             # SQLite database (created at runtime)
-└── router.php        # Dev server router
+│   ├── Unit/           # Service + validator unit tests
+│   ├── Sql/            # Direct SQLite persistence assertions
+│   ├── Api/            # HTTP API contract + validation tests
+│   ├── Integration/    # Broader HTTP flows
+│   └── e2e/            # Playwright UI tests
+├── data/               # SQLite database (created at runtime)
+└── router.php          # Dev server router
 ```
+
+## Backend validation
+
+Controllers validate JSON before calling domain services:
+
+| Endpoint | Rules |
+|----------|-------|
+| `POST /api/auth/register` | email + password required; email format; password ≥ 6 chars; unique email |
+| `POST /api/auth/login` | email + password required |
+| `POST /api/cart/items` | `book_id` positive int; `quantity` positive int (default 1) |
+| `PATCH /api/cart/items/{id}` | `quantity` required positive int |
+
+Invalid input → `400` with `{ "detail": "..." }`. Domain not-found → `404`, duplicate email → `409`.
 
 ## API Endpoints
 
@@ -122,9 +136,7 @@ GitHub Actions runs on every push and pull request to `main`/`master`:
 | Job | What it runs |
 |-----|----------------|
 | **Build Angular frontend** | `npm run build` into `public/` |
-| **PHPUnit** | Unit + integration API tests |
-| **Smoke** | Bash curl script for API happy path |
-| **Playwright E2E** | Browser UI tests + HTTP contract/security specs |
+| **PHPUnit** | Unit + SQL + API + integration tests |
 
 ### Run tests locally
 
@@ -132,6 +144,9 @@ GitHub Actions runs on every push and pull request to `main`/`master`:
 composer install
 cd frontend && npm install && npm run build && cd ..
 vendor/bin/phpunit
+composer test:unit
+composer test:sql
+composer test:api
 bash scripts/ci-smoke.sh   # with server running
 cd tests/e2e && npm install && npx playwright install chromium && npm test
 ```

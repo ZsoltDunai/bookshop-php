@@ -17,11 +17,16 @@ final class CartController
     public function addItem(): never
     {
         $userId = AuthContext::requireUserId();
-        $body = Request::jsonBody();
-        $bookId = (int) ($body['book_id'] ?? 0);
-        $quantity = max(1, (int) ($body['quantity'] ?? 1));
+        $validated = CartRequestValidator::addItem(Request::jsonBody());
+        if (!$validated['ok']) {
+            JsonResponse::error($validated['error'], JsonResponse::statusForCode($validated['code']));
+        }
 
-        $result = $this->cart->add($userId, $bookId, $quantity);
+        $result = $this->cart->add(
+            $userId,
+            $validated['data']['book_id'],
+            $validated['data']['quantity']
+        );
         if (!$result['ok']) {
             JsonResponse::error($result['error'], JsonResponse::statusForCode($result['code'] ?? null));
         }
@@ -33,10 +38,12 @@ final class CartController
     public function updateItem(int $itemId): never
     {
         $userId = AuthContext::requireUserId();
-        $body = Request::jsonBody();
-        $quantity = max(1, (int) ($body['quantity'] ?? 1));
+        $validated = CartRequestValidator::updateItem(Request::jsonBody());
+        if (!$validated['ok']) {
+            JsonResponse::error($validated['error'], JsonResponse::statusForCode($validated['code']));
+        }
 
-        $result = $this->cart->update($userId, $itemId, $quantity);
+        $result = $this->cart->update($userId, $itemId, $validated['data']['quantity']);
         if (!$result['ok']) {
             JsonResponse::error($result['error'], JsonResponse::statusForCode($result['code'] ?? null));
         }

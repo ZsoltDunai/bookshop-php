@@ -11,7 +11,15 @@ final class AuthController
     public function register(): never
     {
         $body = Request::jsonBody();
-        $result = $this->auth->register($body['email'] ?? '', $body['password'] ?? '');
+        $validated = AuthRequestValidator::register($body);
+        if (!$validated['ok']) {
+            JsonResponse::error($validated['error'], JsonResponse::statusForCode($validated['code']));
+        }
+
+        $result = $this->auth->register(
+            $validated['data']['email'],
+            $validated['data']['password']
+        );
 
         if (!$result['ok']) {
             JsonResponse::error($result['error'], JsonResponse::statusForCode($result['code'] ?? null));
@@ -23,7 +31,15 @@ final class AuthController
     public function login(): never
     {
         $body = Request::jsonBody();
-        $result = $this->auth->authenticate($body['email'] ?? '', $body['password'] ?? '');
+        $validated = AuthRequestValidator::login($body);
+        if (!$validated['ok']) {
+            JsonResponse::error($validated['error'], JsonResponse::statusForCode($validated['code']));
+        }
+
+        $result = $this->auth->authenticate(
+            $validated['data']['email'],
+            $validated['data']['password']
+        );
 
         if (!$result['ok']) {
             JsonResponse::error('Invalid credentials', 401);

@@ -14,6 +14,8 @@
     "scripts": {
         "test": "phpunit",
         "test:unit": "phpunit --testsuite unit",
+        "test:sql": "phpunit --testsuite sql",
+        "test:api": "phpunit --testsuite api",
         "test:integration": "phpunit --testsuite integration"
     }
 }

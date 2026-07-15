@@ -8,6 +8,12 @@
         <testsuite name="unit">
             <directory>tests/Unit</directory>
         </testsuite>
+        <testsuite name="sql">
+            <directory>tests/Sql</directory>
+        </testsuite>
+        <testsuite name="api">
+            <directory>tests/Api</directory>
+        </testsuite>
         <testsuite name="integration">
             <directory>tests/Integration</directory>
         </testsuite>
