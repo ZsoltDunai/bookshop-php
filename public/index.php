@@ -26,11 +26,16 @@ if (str_starts_with($path, '/api')) {
     ApiRouter::dispatch($method, $path);
 }
 
-$spaFile = __DIR__ . '/browser/index.html';
-if (is_file($spaFile)) {
-    header('Content-Type: text/html; charset=UTF-8');
-    readfile($spaFile);
-    exit;
+$spaCandidates = [
+    __DIR__ . '/browser/index.html',
+    __DIR__ . '/index.html',
+];
+foreach ($spaCandidates as $spaFile) {
+    if (is_file($spaFile)) {
+        header('Content-Type: text/html; charset=UTF-8');
+        readfile($spaFile);
+        exit;
+    }
 }
 
 http_response_code(503);

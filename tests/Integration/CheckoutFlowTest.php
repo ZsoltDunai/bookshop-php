@@ -50,7 +50,9 @@ class CheckoutFlowTest extends IntegrationTestCase
 
     public function testCheckoutEmptyCartShowsError(): void
     {
-        $this->login();
+        $email = 'empty-cart-' . uniqid('', true) . '@bookshop.io';
+        $this->registerUser($email);
+        $this->login($email);
 
         $checkout = $this->client()->postJson('/api/orders/checkout');
         $this->assertSame(400, $checkout->status);

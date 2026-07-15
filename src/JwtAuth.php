@@ -12,7 +12,8 @@ final class JwtAuth
 
     private static function secret(): string
     {
-        return getenv('BOOKSHOP_JWT_SECRET') ?: 'bookshop-demo-secret-change-in-production';
+        // HS256 requires a >= 256-bit key (php-jwt v7 enforces this).
+        return getenv('BOOKSHOP_JWT_SECRET') ?: 'bookshop-demo-secret-change-in-production-min-32b';
     }
 
     public static function createToken(int $userId): string

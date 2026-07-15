@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-register',
@@ -36,6 +37,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
+  private readonly cart = inject(CartService);
   private readonly router = inject(Router);
 
   email = '';
@@ -50,6 +52,7 @@ export class RegisterComponent {
       return;
     }
 
+    await this.cart.refresh();
     await this.router.navigate(['/']);
   }
 }
