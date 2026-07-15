@@ -1,4 +1,4 @@
-import { Page, expect } from "@playwright/test";
+import { Locator, Page } from "@playwright/test";
 import { NavBar } from "./nav.page";
 
 export class RegisterPage {
@@ -8,43 +8,48 @@ export class RegisterPage {
     this.nav = new NavBar(page);
   }
 
-  async goto() {
-    await this.page.goto("/register");
-    await this.expectLoaded();
+  get heading(): Locator {
+    return this.page.getByTestId("register-heading");
   }
 
-  async expectLoaded() {
-    await expect(this.page).toHaveURL(/\/register/);
-    await expect(this.page.getByTestId("register-heading")).toBeVisible();
+  get emailInput(): Locator {
+    return this.page.getByTestId("register-email");
+  }
+
+  get passwordInput(): Locator {
+    return this.page.getByTestId("register-password");
+  }
+
+  get submitButton(): Locator {
+    return this.page.getByTestId("register-submit");
+  }
+
+  get alert(): Locator {
+    return this.page.getByTestId("register-alert");
+  }
+
+  async goto() {
+    await this.page.goto("/register");
   }
 
   async fillForm(email: string, password: string) {
-    await this.page.getByTestId("register-email").fill(email);
-    await this.page.getByTestId("register-password").fill(password);
+    await this.emailInput.fill(email);
+    await this.passwordInput.fill(password);
   }
 
   async submit() {
-    await this.page.getByTestId("register-submit").click();
+    await this.submitButton.click();
   }
 
+  /** Registers and waits until home navigation or error alert appears. */
   async register(email: string, password = "password123") {
     await this.goto();
     await this.fillForm(email, password);
     await this.submit();
     await Promise.race([
       this.page.waitForURL("/", { timeout: 15_000 }),
-      this.page.getByTestId("register-alert").waitFor({ state: "visible", timeout: 15_000 }),
+      this.alert.waitFor({ state: "visible", timeout: 15_000 }),
     ]);
-  }
-
-  async expectRegisteredAs(email: string) {
-    await expect(this.page).toHaveURL("/");
-    await this.nav.expectUser(email);
-  }
-
-  async expectRegisterError() {
-    await expect(this.page.getByTestId("register-alert")).toBeVisible();
-    await expect(this.page).toHaveURL(/\/register/);
   }
 
   async logout() {

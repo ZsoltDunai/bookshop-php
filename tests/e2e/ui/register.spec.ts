@@ -1,21 +1,24 @@
-import { test } from "@helpers/fixtures";
+import { test, expect } from "@helpers/fixtures";
 
 test.describe("Register UI", () => {
-  test("creates a new account", async ({ registerPage }) => {
+  test("creates a new account", async ({ page, registerPage }) => {
     const email = `user-${Date.now()}@bookshop.io`;
 
     await registerPage.register(email);
-    await registerPage.expectRegisteredAs(email);
+    await expect(page).toHaveURL("/");
+    await expect(registerPage.nav.userLabel).toContainText(email);
   });
 
-  test("shows error for duplicate email", async ({ registerPage }) => {
+  test("shows error for duplicate email", async ({ page, registerPage }) => {
     const email = `dup-${Date.now()}@bookshop.io`;
 
     await registerPage.register(email);
-    await registerPage.expectRegisteredAs(email);
+    await expect(page).toHaveURL("/");
+    await expect(registerPage.nav.userLabel).toContainText(email);
 
     await registerPage.logout();
     await registerPage.register(email);
-    await registerPage.expectRegisterError();
+    await expect(registerPage.alert).toBeVisible();
+    await expect(page).toHaveURL(/\/register/);
   });
 });

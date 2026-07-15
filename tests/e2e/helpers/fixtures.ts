@@ -41,6 +41,8 @@ export const test = base.extend<Fixtures>({
   cartWithItem: async ({ loginPage, shopPage }, use) => {
     await loginPage.login();
     await shopPage.goto();
+    await shopPage.bookGrid.waitFor({ state: "visible" });
+    await shopPage.addToCartButtons.first().waitFor({ state: "visible" });
     await shopPage.addFirstBookToCart();
     await use();
   },

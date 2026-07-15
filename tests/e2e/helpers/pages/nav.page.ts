@@ -1,26 +1,38 @@
-import { Page, expect } from "@playwright/test";
+import { Locator, Page } from "@playwright/test";
 
-/** Shared header/nav interactions used across pages. */
+/** Shared header/nav interactions — no assertions. */
 export class NavBar {
   constructor(private readonly page: Page) {}
 
+  get loginLink(): Locator {
+    return this.page.getByTestId("nav-login");
+  }
+
+  get logoutButton(): Locator {
+    return this.page.getByTestId("nav-logout");
+  }
+
+  get cartLink(): Locator {
+    return this.page.getByTestId("nav-cart");
+  }
+
+  get userLabel(): Locator {
+    return this.page.getByTestId("nav-user");
+  }
+
+  get cartCountBadge(): Locator {
+    return this.page.getByTestId("nav-cart-count");
+  }
+
   async clickLogin() {
-    await this.page.getByTestId("nav-login").click();
+    await this.loginLink.click();
   }
 
   async clickLogout() {
-    await this.page.getByTestId("nav-logout").click();
+    await this.logoutButton.click();
   }
 
   async clickCart() {
-    await this.page.getByTestId("nav-cart").click();
-  }
-
-  async expectUser(email: string) {
-    await expect(this.page.getByTestId("nav-user")).toContainText(email);
-  }
-
-  async expectCartCount(count: number | string) {
-    await expect(this.page.getByTestId("nav-cart-count")).toHaveText(String(count));
+    await this.cartLink.click();
   }
 }

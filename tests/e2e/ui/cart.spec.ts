@@ -1,25 +1,27 @@
-import { test } from "@helpers/fixtures";
+import { test, expect } from "@helpers/fixtures";
 
 test.describe("Cart UI", () => {
-  test("redirects guests to login", async ({ cartPage }) => {
+  test("redirects guests to login", async ({ page, cartPage }) => {
     await cartPage.goto();
-    await cartPage.expectRedirectedToLogin();
+    await expect(page).toHaveURL(/\/login/);
   });
 
-  test("add to cart increases badge", async ({ registerPage, shopPage }) => {
+  test("add to cart increases badge", async ({ page, registerPage, shopPage }) => {
     const email = `cart-badge-${Date.now()}@bookshop.io`;
 
     await registerPage.register(email);
-    await registerPage.expectRegisteredAs(email);
+    await expect(page).toHaveURL("/");
+    await expect(registerPage.nav.userLabel).toContainText(email);
 
     await shopPage.goto();
     await shopPage.addFirstBookToCart();
-    await shopPage.expectCartBadge(1);
+    await expect(shopPage.nav.cartCountBadge).toHaveText("1");
   });
 
   test("cart shows added item", async ({ cartWithItem, cartPage }) => {
     await cartPage.goto();
-    await cartPage.expectHasItems();
-    await cartPage.expectCheckoutVisible();
+    await expect(cartPage.layout).toBeVisible();
+    await expect(cartPage.items.first()).toBeVisible();
+    await expect(cartPage.checkoutButton).toBeVisible();
   });
 });
