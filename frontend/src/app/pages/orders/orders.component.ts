@@ -3,11 +3,13 @@ import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { Order } from '../../models';
 import { OrderService } from '../../services/order.service';
+import { ApiService } from '../../services/api.service';
+import { PricePipe } from '../../pipes/price.pipe';
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, PricePipe],
   template: `
     <section class="page-header">
       <h1 data-testid="orders-heading">Order history</h1>
@@ -33,7 +35,7 @@ import { OrderService } from '../../services/order.service';
                   {{ order.created_at | date: 'medium' }}
                 </time>
               </div>
-              <div class="order-total">{{ formatPrice(order.total) }}</div>
+              <div class="order-total">{{ order.total | price }}</div>
             </header>
 
             <ul class="order-items">
@@ -41,7 +43,7 @@ import { OrderService } from '../../services/order.service';
                 <li>
                   <span class="order-item-title">{{ item.book.title }}</span>
                   <span class="order-item-qty">×{{ item.quantity }}</span>
-                  <span class="order-item-price">{{ formatPrice(item.unit_price * item.quantity) }}</span>
+                  <span class="order-item-price">{{ item.unit_price * item.quantity | price }}</span>
                 </li>
               }
             </ul>
@@ -64,13 +66,9 @@ export class OrdersComponent implements OnInit {
   async load(): Promise<void> {
     try {
       this.orders = await this.orderService.list();
-    } catch {
-      this.error = 'Failed to load orders.';
+    } catch (error) {
+      this.error = ApiService.errorMessage(error);
       this.orders = [];
     }
-  }
-
-  formatPrice(amount: number): string {
-    return `$${amount.toFixed(2)}`;
   }
 }

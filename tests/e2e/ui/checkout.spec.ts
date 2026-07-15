@@ -1,4 +1,4 @@
-import { test, expect } from "@helpers/fixtures";
+import { test } from "@helpers/fixtures";
 
 test.describe("Checkout UI", () => {
   test("completes purchase and shows order", async ({ cartWithItem, cartPage, ordersPage }) => {

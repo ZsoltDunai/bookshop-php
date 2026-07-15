@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 class Auth
 {
-    private PDO $db;
-
-    public function __construct()
+    public function __construct(private readonly PDO $db)
     {
-        $this->db = Database::getInstance();
     }
 
     public function findUserById(int $id): ?array
@@ -25,17 +22,29 @@ class Auth
         $email = trim(strtolower($email));
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return ['ok' => false, 'error' => 'Please enter a valid email address.'];
+            return [
+                'ok' => false,
+                'error' => 'Please enter a valid email address.',
+                'code' => 'validation',
+            ];
         }
 
         if (strlen($password) < 6) {
-            return ['ok' => false, 'error' => 'Password must be at least 6 characters.'];
+            return [
+                'ok' => false,
+                'error' => 'Password must be at least 6 characters.',
+                'code' => 'validation',
+            ];
         }
 
         $stmt = $this->db->prepare('SELECT id FROM users WHERE email = ?');
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
-            return ['ok' => false, 'error' => 'An account with this email already exists.'];
+            return [
+                'ok' => false,
+                'error' => 'An account with this email already exists.',
+                'code' => 'conflict',
+            ];
         }
 
         $stmt = $this->db->prepare('INSERT INTO users (email, password_hash) VALUES (?, ?)');
@@ -60,7 +69,11 @@ class Auth
         $user = $stmt->fetch();
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
-            return ['ok' => false, 'error' => 'Invalid credentials'];
+            return [
+                'ok' => false,
+                'error' => 'Invalid credentials',
+                'code' => 'unauthorized',
+            ];
         }
 
         return ['ok' => true, 'user_id' => (int) $user['id']];

@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 class OrderService
 {
-    private PDO $db;
-
-    public function __construct()
-    {
-        $this->db = Database::getInstance();
+    public function __construct(
+        private readonly PDO $db,
+        private readonly CartService $cart,
+    ) {
     }
 
     public function checkout(int $userId): array
     {
-        $cart = new CartService();
-        $items = $cart->items($userId);
+        $items = $this->cart->items($userId);
 
         if (empty($items)) {
-            return ['ok' => false, 'error' => 'Your cart is empty.'];
+            return ['ok' => false, 'error' => 'Your cart is empty.', 'code' => 'validation'];
         }
 
         try {
@@ -30,11 +28,15 @@ class OrderService
 
                 if (!$book || (int) $book['stock'] < (int) $item['quantity']) {
                     $this->db->rollBack();
-                    return ['ok' => false, 'error' => '"' . $item['title'] . '" is out of stock.'];
+                    return [
+                        'ok' => false,
+                        'error' => '"' . $item['title'] . '" is out of stock.',
+                        'code' => 'validation',
+                    ];
                 }
             }
 
-            $total = $cart->total($userId);
+            $total = $this->cart->total($userId);
 
             $stmt = $this->db->prepare('INSERT INTO orders (user_id, total) VALUES (?, ?)');
             $stmt->execute([$userId, $total]);
@@ -58,7 +60,7 @@ class OrderService
                 $stockStmt->execute([$item['quantity'], $item['book_id']]);
             }
 
-            $cart->clear($userId);
+            $this->cart->clear($userId);
             $this->db->commit();
 
             return ['ok' => true, 'order_id' => $orderId];
@@ -67,16 +69,15 @@ class OrderService
                 $this->db->rollBack();
             }
 
-            return ['ok' => false, 'error' => 'Checkout failed. Please try again.'];
+            return ['ok' => false, 'error' => 'Checkout failed. Please try again.', 'code' => 'validation'];
         }
     }
 
     public function ordersForUser(int $userId): array
     {
-        $orders = $this->forUser($userId);
         $payload = [];
 
-        foreach ($orders as $order) {
+        foreach ($this->forUser($userId) as $order) {
             $formatted = $this->findForUser((int) $order['id'], $userId);
             if ($formatted) {
                 $payload[] = $formatted;
@@ -96,14 +97,13 @@ class OrderService
             return null;
         }
 
-        $items = $this->items($orderId);
-        $mappedItems = array_map(static function (array $item): array {
+        $items = array_map(static function (array $item): array {
             $item['unit_price'] = (float) $item['price'];
 
             return $item;
-        }, $items);
+        }, $this->items($orderId));
 
-        return ApiFormatter::order($order, $mappedItems);
+        return ApiFormatter::order($order, $items);
     }
 
     public function forUser(int $userId): array

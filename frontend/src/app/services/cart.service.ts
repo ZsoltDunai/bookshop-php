@@ -17,14 +17,20 @@ export class CartService {
     return this.cart().items.reduce((sum, item) => sum + item.quantity, 0);
   }
 
-  async refresh(): Promise<void> {
+  async refresh(): Promise<string | null> {
     if (!this.auth.isLoggedIn) {
       this.cart.set({ items: [], total: 0 });
-      return;
+      return null;
     }
 
-    const cart = await firstValueFrom(this.api.get<Cart>('/api/cart'));
-    this.cart.set(cart);
+    try {
+      const cart = await firstValueFrom(this.api.get<Cart>('/api/cart'));
+      this.cart.set(cart);
+      return null;
+    } catch (error) {
+      this.cart.set({ items: [], total: 0 });
+      return ApiService.errorMessage(error);
+    }
   }
 
   async add(bookId: number, quantity = 1): Promise<string | null> {
@@ -32,8 +38,7 @@ export class CartService {
       await firstValueFrom(
         this.api.post<CartItem>('/api/cart/items', { book_id: bookId, quantity }),
       );
-      await this.refresh();
-      return null;
+      return this.refresh();
     } catch (error) {
       return ApiService.errorMessage(error);
     }
@@ -42,8 +47,7 @@ export class CartService {
   async update(itemId: number, quantity: number): Promise<string | null> {
     try {
       await firstValueFrom(this.api.patch<CartItem>(`/api/cart/items/${itemId}`, { quantity }));
-      await this.refresh();
-      return null;
+      return this.refresh();
     } catch (error) {
       return ApiService.errorMessage(error);
     }
@@ -52,20 +56,18 @@ export class CartService {
   async remove(itemId: number): Promise<string | null> {
     try {
       await firstValueFrom(this.api.delete(`/api/cart/items/${itemId}`));
-      await this.refresh();
-      return null;
+      return this.refresh();
     } catch (error) {
       return ApiService.errorMessage(error);
     }
   }
 
-  async checkout(): Promise<{ ok: true } | { ok: false; error: string }> {
+  async checkout(): Promise<string | null> {
     try {
       await firstValueFrom(this.api.post('/api/orders/checkout'));
-      await this.refresh();
-      return { ok: true };
+      return this.refresh();
     } catch (error) {
-      return { ok: false, error: ApiService.errorMessage(error) };
+      return ApiService.errorMessage(error);
     }
   }
 }

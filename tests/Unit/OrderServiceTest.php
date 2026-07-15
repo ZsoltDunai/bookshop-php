@@ -14,7 +14,7 @@ class OrderServiceTest extends TestCase
 
     public function testCheckoutEmptyCartFails(): void
     {
-        $orders = new OrderService();
+        $orders = $this->orderService();
         $result = $orders->checkout($this->userId);
 
         $this->assertFalse($result['ok']);
@@ -23,9 +23,9 @@ class OrderServiceTest extends TestCase
 
     public function testCheckoutCreatesOrderAndClearsCart(): void
     {
-        $cart = new CartService();
-        $orders = new OrderService();
-        $books = new BookService();
+        $cart = $this->cartService();
+        $orders = $this->orderService();
+        $books = $this->bookService();
         $book = $books->find(1);
         $bookId = (int) $book['id'];
 
@@ -46,9 +46,9 @@ class OrderServiceTest extends TestCase
 
     public function testCheckoutReducesStock(): void
     {
-        $cart = new CartService();
-        $orders = new OrderService();
-        $books = new BookService();
+        $cart = $this->cartService();
+        $orders = $this->orderService();
+        $books = $this->bookService();
         $bookId = $this->firstBookId();
         $initialStock = (int) $books->find($bookId)['stock'];
 
@@ -65,8 +65,8 @@ class OrderServiceTest extends TestCase
         $bookId = $this->firstBookId();
         $db->prepare('UPDATE books SET stock = 0 WHERE id = ?')->execute([$bookId]);
 
-        $cart = new CartService();
-        $orders = new OrderService();
+        $cart = $this->cartService();
+        $orders = $this->orderService();
 
         $db->prepare('INSERT INTO cart_items (user_id, book_id, quantity) VALUES (?, ?, ?)')
             ->execute([$this->userId, $bookId, 1]);
@@ -80,8 +80,8 @@ class OrderServiceTest extends TestCase
     public function testForUserOnlyReturnsOwnOrders(): void
     {
         $otherUserId = $this->createUser('other@example.com');
-        $cart = new CartService();
-        $orders = new OrderService();
+        $cart = $this->cartService();
+        $orders = $this->orderService();
 
         $cart->add($this->userId, $this->firstBookId(), 1);
         $orders->checkout($this->userId);

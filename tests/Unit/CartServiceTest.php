@@ -14,7 +14,7 @@ class CartServiceTest extends TestCase
 
     public function testAddBookToEmptyCart(): void
     {
-        $cart = new CartService();
+        $cart = $this->cartService();
         $bookId = $this->firstBookId();
 
         $result = $cart->add($this->userId, $bookId, 1);
@@ -26,7 +26,7 @@ class CartServiceTest extends TestCase
 
     public function testAddSameBookMergesQuantity(): void
     {
-        $cart = new CartService();
+        $cart = $this->cartService();
         $bookId = $this->firstBookId();
 
         $cart->add($this->userId, $bookId, 1);
@@ -40,7 +40,7 @@ class CartServiceTest extends TestCase
 
     public function testAddMoreThanStockFails(): void
     {
-        $cart = new CartService();
+        $cart = $this->cartService();
         $bookId = $this->firstBookId();
 
         $result = $cart->add($this->userId, $bookId, 999);
@@ -51,7 +51,7 @@ class CartServiceTest extends TestCase
 
     public function testAddMissingBookFails(): void
     {
-        $cart = new CartService();
+        $cart = $this->cartService();
         $result = $cart->add($this->userId, 9999, 1);
 
         $this->assertFalse($result['ok']);
@@ -60,7 +60,7 @@ class CartServiceTest extends TestCase
 
     public function testUpdateQuantity(): void
     {
-        $cart = new CartService();
+        $cart = $this->cartService();
         $bookId = $this->firstBookId();
         $cart->add($this->userId, $bookId, 1);
 
@@ -73,7 +73,7 @@ class CartServiceTest extends TestCase
 
     public function testUpdateToZeroRemovesItem(): void
     {
-        $cart = new CartService();
+        $cart = $this->cartService();
         $bookId = $this->firstBookId();
         $cart->add($this->userId, $bookId, 1);
 
@@ -86,7 +86,7 @@ class CartServiceTest extends TestCase
 
     public function testRemoveItem(): void
     {
-        $cart = new CartService();
+        $cart = $this->cartService();
         $bookId = $this->firstBookId();
         $cart->add($this->userId, $bookId, 1);
 
@@ -99,8 +99,8 @@ class CartServiceTest extends TestCase
 
     public function testTotalCalculation(): void
     {
-        $cart = new CartService();
-        $books = new BookService();
+        $cart = $this->cartService();
+        $books = $this->bookService();
         $first = $books->find(1);
         $second = $books->find(2);
 

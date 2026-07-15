@@ -1,17 +1,14 @@
-import { test, expect } from "@helpers/fixtures";
+import { test } from "@helpers/fixtures";
 
 test.describe("Orders UI", () => {
-  test("shows empty state for new user", async ({ page }) => {
+  test("shows empty state for new user", async ({ registerPage, ordersPage }) => {
     const email = `orders-empty-${Date.now()}@bookshop.io`;
 
-    await page.goto("/register");
-    await page.getByTestId("register-email").fill(email);
-    await page.getByTestId("register-password").fill("password123");
-    await page.getByTestId("register-submit").click();
-    await expect(page).toHaveURL("/");
+    await registerPage.register(email);
+    await registerPage.expectRegisteredAs(email);
 
-    await page.goto("/orders");
-    await expect(page.getByTestId("orders-empty")).toBeVisible();
+    await ordersPage.goto();
+    await ordersPage.expectEmpty();
   });
 
   test("shows order after checkout", async ({ cartWithItem, cartPage, ordersPage }) => {

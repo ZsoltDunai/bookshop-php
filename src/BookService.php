@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 class BookService
 {
-    private PDO $db;
-
-    public function __construct()
+    public function __construct(private readonly PDO $db)
     {
-        $this->db = Database::getInstance();
     }
 
     public function all(): array

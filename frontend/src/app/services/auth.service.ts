@@ -64,7 +64,7 @@ export class AuthService {
     void this.router.navigate(['/']);
   }
 
-  private clearSession(): void {
+  clearSession(): void {
     localStorage.removeItem(TOKEN_KEY);
     this.user.set(null);
   }

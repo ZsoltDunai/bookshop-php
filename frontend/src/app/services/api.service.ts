@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -31,9 +31,5 @@ export class ApiService {
     }
 
     return 'Request failed';
-  }
-
-  static rethrow(error: unknown) {
-    return throwError(() => error);
   }
 }

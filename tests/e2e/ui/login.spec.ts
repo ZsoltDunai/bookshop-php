@@ -1,22 +1,19 @@
-import { test, expect } from "@helpers/fixtures";
+import { test } from "@helpers/fixtures";
+import { DEMO_USER } from "@helpers/constants";
 
 test.describe("Login UI", () => {
-  test("home page links to login", async ({ page }) => {
-    await page.goto("/");
-    await page.getByTestId("nav-login").click();
-    await expect(page).toHaveURL(/\/login/);
-    await expect(page.getByTestId("login-heading")).toBeVisible();
+  test("home page links to login", async ({ loginPage }) => {
+    await loginPage.openFromHome();
   });
 
-  test("successful login redirects home", async ({ page, loginPage, shopPage }) => {
+  test("successful login redirects home", async ({ loginPage, shopPage }) => {
     await loginPage.login();
-    await expect(page).toHaveURL("/");
     await shopPage.expectLoaded();
-    await expect(page.getByTestId("nav-user")).toContainText("demo@bookshop.io");
+    await loginPage.expectLoggedInAs(DEMO_USER.email);
   });
 
   test("invalid login shows error", async ({ loginPage }) => {
-    await loginPage.login("demo@bookshop.io", "wrong-password");
+    await loginPage.login(DEMO_USER.email, "wrong-password");
     await loginPage.expectLoginError();
   });
 });

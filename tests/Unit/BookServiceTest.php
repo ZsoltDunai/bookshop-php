@@ -6,7 +6,7 @@ class BookServiceTest extends TestCase
 {
     public function testAllReturnsSeededBooks(): void
     {
-        $books = new BookService();
+        $books = $this->bookService();
         $all = $books->all();
 
         $this->assertGreaterThanOrEqual(6, count($all));
@@ -15,7 +15,7 @@ class BookServiceTest extends TestCase
 
     public function testFindExistingBook(): void
     {
-        $books = new BookService();
+        $books = $this->bookService();
         $book = $books->find(1);
 
         $this->assertNotNull($book);
@@ -24,14 +24,14 @@ class BookServiceTest extends TestCase
 
     public function testFindMissingBookReturnsNull(): void
     {
-        $books = new BookService();
+        $books = $this->bookService();
 
         $this->assertNull($books->find(9999));
     }
 
     public function testSearchByAuthor(): void
     {
-        $books = new BookService();
+        $books = $this->bookService();
         $results = $books->search('Orwell');
 
         $this->assertCount(1, $results);
@@ -40,7 +40,7 @@ class BookServiceTest extends TestCase
 
     public function testSearchWithNoMatches(): void
     {
-        $books = new BookService();
+        $books = $this->bookService();
         $results = $books->search('zzznomatch');
 
         $this->assertCount(0, $results);

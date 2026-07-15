@@ -1,34 +1,21 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@helpers/fixtures";
 
 test.describe("Register UI", () => {
-  test("creates a new account", async ({ page }) => {
+  test("creates a new account", async ({ registerPage }) => {
     const email = `user-${Date.now()}@bookshop.io`;
 
-    await page.goto("/register");
-    await page.getByTestId("register-email").fill(email);
-    await page.getByTestId("register-password").fill("password123");
-    await page.getByTestId("register-submit").click();
-
-    await expect(page).toHaveURL("/");
-    await expect(page.getByTestId("nav-user")).toContainText(email);
+    await registerPage.register(email);
+    await registerPage.expectRegisteredAs(email);
   });
 
-  test("shows error for duplicate email", async ({ page }) => {
+  test("shows error for duplicate email", async ({ registerPage }) => {
     const email = `dup-${Date.now()}@bookshop.io`;
 
-    await page.goto("/register");
-    await page.getByTestId("register-email").fill(email);
-    await page.getByTestId("register-password").fill("password123");
-    await page.getByTestId("register-submit").click();
-    await expect(page).toHaveURL("/");
+    await registerPage.register(email);
+    await registerPage.expectRegisteredAs(email);
 
-    await page.getByTestId("nav-logout").click();
-    await page.goto("/register");
-    await page.getByTestId("register-email").fill(email);
-    await page.getByTestId("register-password").fill("password123");
-    await page.getByTestId("register-submit").click();
-
-    await expect(page.getByTestId("register-alert")).toBeVisible();
-    await expect(page).toHaveURL(/\/register/);
+    await registerPage.logout();
+    await registerPage.register(email);
+    await registerPage.expectRegisterError();
   });
 });

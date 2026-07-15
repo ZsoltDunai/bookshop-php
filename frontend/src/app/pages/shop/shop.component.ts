@@ -6,11 +6,13 @@ import { Book } from '../../models';
 import { BookService } from '../../services/book.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { ApiService } from '../../services/api.service';
+import { PricePipe } from '../../pipes/price.pipe';
 
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [RouterLink, FormsModule, UpperCasePipe],
+  imports: [RouterLink, FormsModule, UpperCasePipe, PricePipe],
   template: `
     <section class="hero">
       <h1 data-testid="home-heading">Discover your next great read</h1>
@@ -53,7 +55,7 @@ import { AuthService } from '../../services/auth.service';
               </h2>
               <p class="book-author">{{ book.author }}</p>
               <div class="book-meta">
-                <span class="book-price">{{ formatPrice(book.price) }}</span>
+                <span class="book-price">{{ book.price | price }}</span>
                 <span class="book-stock" [class.low]="book.stock < 3">{{ book.stock }} in stock</span>
               </div>
               @if (auth.isLoggedIn && book.stock > 0) {
@@ -101,8 +103,8 @@ export class ShopComponent implements OnInit {
     this.error = '';
     try {
       this.books = await this.bookService.list(this.query);
-    } catch {
-      this.error = 'Failed to load books.';
+    } catch (error) {
+      this.error = ApiService.errorMessage(error);
       this.books = [];
     }
   }
@@ -117,9 +119,5 @@ export class ShopComponent implements OnInit {
     if (message) {
       this.error = message;
     }
-  }
-
-  formatPrice(amount: number): string {
-    return `$${amount.toFixed(2)}`;
   }
 }

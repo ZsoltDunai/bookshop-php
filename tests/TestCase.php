@@ -36,13 +36,37 @@ abstract class TestCase extends PHPUnitTestCase
         }
     }
 
+    protected function db(): PDO
+    {
+        return Database::getInstance();
+    }
+
+    protected function authService(): Auth
+    {
+        return new Auth($this->db());
+    }
+
+    protected function bookService(): BookService
+    {
+        return new BookService($this->db());
+    }
+
+    protected function cartService(): CartService
+    {
+        return new CartService($this->db(), $this->bookService());
+    }
+
+    protected function orderService(): OrderService
+    {
+        return new OrderService($this->db(), $this->cartService());
+    }
+
     protected function createUser(string $email = 'test@example.com', string $password = 'password123'): int
     {
-        $db = Database::getInstance();
-        $stmt = $db->prepare('INSERT INTO users (email, password_hash) VALUES (?, ?)');
+        $stmt = $this->db()->prepare('INSERT INTO users (email, password_hash) VALUES (?, ?)');
         $stmt->execute([$email, password_hash($password, PASSWORD_DEFAULT)]);
 
-        return (int) $db->lastInsertId();
+        return (int) $this->db()->lastInsertId();
     }
 
     protected function loginAs(int $userId): void
@@ -52,8 +76,6 @@ abstract class TestCase extends PHPUnitTestCase
 
     protected function firstBookId(): int
     {
-        $books = new BookService();
-
-        return (int) $books->all()[0]['id'];
+        return (int) $this->bookService()->all()[0]['id'];
     }
 }

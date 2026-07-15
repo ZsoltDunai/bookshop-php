@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 class CartService
 {
-    private PDO $db;
-
-    public function __construct()
-    {
-        $this->db = Database::getInstance();
+    public function __construct(
+        private readonly PDO $db,
+        private readonly BookService $books,
+    ) {
     }
 
     public function items(int $userId): array
@@ -45,15 +44,14 @@ class CartService
 
     public function add(int $userId, int $bookId, int $quantity = 1): array
     {
-        $bookService = new BookService();
-        $book = $bookService->find($bookId);
+        $book = $this->books->find($bookId);
 
         if (!$book) {
-            return ['ok' => false, 'error' => 'Book not found.'];
+            return ['ok' => false, 'error' => 'Book not found.', 'code' => 'not_found'];
         }
 
         if ($quantity < 1) {
-            return ['ok' => false, 'error' => 'Quantity must be at least 1.'];
+            return ['ok' => false, 'error' => 'Quantity must be at least 1.', 'code' => 'validation'];
         }
 
         $stmt = $this->db->prepare('SELECT id, quantity FROM cart_items WHERE user_id = ? AND book_id = ?');
@@ -63,7 +61,7 @@ class CartService
         $newQty = $existing ? (int) $existing['quantity'] + $quantity : $quantity;
 
         if ($newQty > (int) $book['stock']) {
-            return ['ok' => false, 'error' => 'Not enough stock available.'];
+            return ['ok' => false, 'error' => 'Not enough stock available.', 'code' => 'validation'];
         }
 
         if ($existing) {
@@ -105,7 +103,7 @@ class CartService
         $item = $stmt->fetch();
 
         if (!$item) {
-            return ['ok' => false, 'error' => 'Cart item not found.'];
+            return ['ok' => false, 'error' => 'Cart item not found.', 'code' => 'not_found'];
         }
 
         if ($quantity < 1) {
@@ -113,7 +111,7 @@ class CartService
         }
 
         if ($quantity > (int) $item['stock']) {
-            return ['ok' => false, 'error' => 'Not enough stock available.'];
+            return ['ok' => false, 'error' => 'Not enough stock available.', 'code' => 'validation'];
         }
 
         $stmt = $this->db->prepare('UPDATE cart_items SET quantity = ? WHERE id = ? AND user_id = ?');
@@ -126,6 +124,10 @@ class CartService
     {
         $stmt = $this->db->prepare('DELETE FROM cart_items WHERE id = ? AND user_id = ?');
         $stmt->execute([$cartItemId, $userId]);
+
+        if ($stmt->rowCount() === 0) {
+            return ['ok' => false, 'error' => 'Cart item not found.', 'code' => 'not_found'];
+        }
 
         return ['ok' => true];
     }

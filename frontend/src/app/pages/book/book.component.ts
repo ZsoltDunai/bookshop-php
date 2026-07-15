@@ -6,11 +6,12 @@ import { Book } from '../../models';
 import { BookService } from '../../services/book.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { PricePipe } from '../../pipes/price.pipe';
 
 @Component({
   selector: 'app-book',
   standalone: true,
-  imports: [RouterLink, FormsModule, UpperCasePipe],
+  imports: [RouterLink, FormsModule, UpperCasePipe, PricePipe],
   template: `
     @if (notFound) {
       <div class="empty-state">
@@ -33,7 +34,7 @@ import { AuthService } from '../../services/auth.service';
         <div class="book-detail-info">
           <h1 data-testid="book-title">{{ book.title }}</h1>
           <p class="book-detail-author">by {{ book.author }}</p>
-          <p class="book-detail-price">{{ formatPrice(book.price) }}</p>
+          <p class="book-detail-price">{{ book.price | price }}</p>
           <p class="book-detail-stock" [class.low]="book.stock < 3">{{ book.stock }} copies available</p>
 
           @if (book.description) {
@@ -109,9 +110,5 @@ export class BookComponent implements OnInit {
     if (message) {
       this.error = message;
     }
-  }
-
-  formatPrice(amount: number): string {
-    return `$${amount.toFixed(2)}`;
   }
 }

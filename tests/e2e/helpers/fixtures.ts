@@ -1,12 +1,16 @@
 import { test as base, expect } from "@playwright/test";
-import { LoginPage } from "./pages/login.page";
-import { ShopPage } from "./pages/shop.page";
-import { CartPage } from "./pages/cart.page";
-import { OrdersPage } from "./pages/orders.page";
+import {
+  LoginPage,
+  RegisterPage,
+  ShopPage,
+  CartPage,
+  OrdersPage,
+} from "./pages";
 import { DEMO_USER } from "./constants";
 
 type Fixtures = {
   loginPage: LoginPage;
+  registerPage: RegisterPage;
   shopPage: ShopPage;
   cartPage: CartPage;
   ordersPage: OrdersPage;
@@ -18,6 +22,9 @@ export const test = base.extend<Fixtures>({
   loginPage: async ({ page }, use) => {
     await use(new LoginPage(page));
   },
+  registerPage: async ({ page }, use) => {
+    await use(new RegisterPage(page));
+  },
   shopPage: async ({ page }, use) => {
     await use(new ShopPage(page));
   },
@@ -27,11 +34,11 @@ export const test = base.extend<Fixtures>({
   ordersPage: async ({ page }, use) => {
     await use(new OrdersPage(page));
   },
-  loggedInPage: async ({ page, loginPage }, use) => {
+  loggedInPage: async ({ loginPage }, use) => {
     await loginPage.login();
     await use();
   },
-  cartWithItem: async ({ page, loginPage, shopPage }, use) => {
+  cartWithItem: async ({ loginPage, shopPage }, use) => {
     await loginPage.login();
     await shopPage.goto();
     await shopPage.addFirstBookToCart();

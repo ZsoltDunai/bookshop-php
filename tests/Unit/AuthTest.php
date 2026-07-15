@@ -6,7 +6,7 @@ class AuthTest extends TestCase
 {
     public function testRegisterWithInvalidEmail(): void
     {
-        $auth = new Auth();
+        $auth = $this->authService();
         $result = $auth->register('not-an-email', 'password123');
 
         $this->assertFalse($result['ok']);
@@ -15,7 +15,7 @@ class AuthTest extends TestCase
 
     public function testRegisterWithShortPassword(): void
     {
-        $auth = new Auth();
+        $auth = $this->authService();
         $result = $auth->register('user@example.com', '123');
 
         $this->assertFalse($result['ok']);
@@ -24,7 +24,7 @@ class AuthTest extends TestCase
 
     public function testRegisterDuplicateEmail(): void
     {
-        $auth = new Auth();
+        $auth = $this->authService();
         $auth->register('user@example.com', 'password123');
 
         $result = $auth->register('user@example.com', 'anotherpass');
@@ -35,7 +35,7 @@ class AuthTest extends TestCase
 
     public function testRegisterCreatesUser(): void
     {
-        $auth = new Auth();
+        $auth = $this->authService();
         $result = $auth->register('newuser@example.com', 'password123');
 
         $this->assertTrue($result['ok']);
@@ -47,7 +47,7 @@ class AuthTest extends TestCase
     {
         $this->createUser('user@example.com', 'password123');
 
-        $auth = new Auth();
+        $auth = $this->authService();
         $result = $auth->authenticate('user@example.com', 'wrong-password');
 
         $this->assertFalse($result['ok']);
@@ -58,7 +58,7 @@ class AuthTest extends TestCase
     {
         $userId = $this->createUser('user@example.com', 'password123');
 
-        $auth = new Auth();
+        $auth = $this->authService();
         $result = $auth->authenticate('user@example.com', 'password123');
 
         $this->assertTrue($result['ok']);
@@ -69,7 +69,7 @@ class AuthTest extends TestCase
     {
         $userId = $this->createUser('user@example.com', 'password123');
 
-        $auth = new Auth();
+        $auth = $this->authService();
         $user = $auth->findUserById($userId);
 
         $this->assertNotNull($user);

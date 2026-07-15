@@ -1,7 +1,12 @@
 import { Page, expect } from "@playwright/test";
+import { NavBar } from "./nav.page";
 
 export class OrdersPage {
-  constructor(private readonly page: Page) {}
+  readonly nav: NavBar;
+
+  constructor(private readonly page: Page) {
+    this.nav = new NavBar(page);
+  }
 
   async goto() {
     await this.page.goto("/orders");
@@ -9,6 +14,10 @@ export class OrdersPage {
 
   async expectLoaded() {
     await expect(this.page.getByTestId("orders-heading")).toBeVisible();
+  }
+
+  async expectEmpty() {
+    await expect(this.page.getByTestId("orders-empty")).toBeVisible();
   }
 
   async expectCheckoutSuccess() {
